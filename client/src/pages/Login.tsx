@@ -56,7 +56,10 @@ export default function Login() {
           onSubmit={handleSubmit}
           className="flex flex-col"
         >
-          <label className="label" htmlFor="email">
+          <label
+            className="label"
+            htmlFor="email"
+          >
             Email
           </label>
 
@@ -127,6 +130,7 @@ export default function Login() {
 
         <p className="mt-4 text-sm text-gray-500">
           Don't have an account?{" "}
+
           <Link
             to="/register"
             className="font-medium text-brand-600"
