@@ -24,7 +24,7 @@ import Profile from "./pages/Profile";
 export default function App() {
   const { data, isSuccess, isError } = useMe();
 
-  const { setUser, setInitialized } = useAuthStore();
+  const { user, initialized, setUser, setInitialized } = useAuthStore();
 
   // Bootstrap authentication session from the backend.
   useEffect(() => {
@@ -47,7 +47,13 @@ export default function App() {
         <Routes>
           <Route
             path="/"
-            element={<Navigate to="/dashboard" replace />}
+            element={
+              !initialized ? (
+                <div className="py-24 text-center text-gray-500">Loading...</div>
+              ) : (
+                <Navigate to={user ? "/dashboard" : "/login"} replace />
+              )
+            }
           />
 
           <Route path="/login" element={<Login />} />

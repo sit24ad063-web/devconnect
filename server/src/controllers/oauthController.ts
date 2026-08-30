@@ -195,9 +195,19 @@ export async function githubCallback(
     // Store JWT securely in an HTTP-only cookie
     setAuthCookie(res, token);
 
-    // Redirect directly to frontend root
-    // This avoids the /oauth/callback routing issue on Render
-    res.redirect(`${env.clientUrl}/`);
+    // Hand off to the SPA's dedicated callback page, which confirms the
+    // session via GET /auth/me before navigating anywhere. Redirecting
+    // straight to "/" and letting it auto-navigate to /dashboard causes a
+    // visible flash-then-bounce-to-login if that confirmation is still
+    // in flight — see client/src/pages/GithubCallback.tsx.
+    //
+    // NOTE: this path must be served by index.html on Render, which means
+    // a rewrite rule (Source "/*" -> Destination "/index.html", Action
+    // "Rewrite") must be configured in the Render Dashboard for the static
+    // site. Render does NOT read client/static.json (that's a Heroku
+    // buildpack convention) — the rule has to be set in the dashboard
+    // itself under the static site's Redirects/Rewrites settings.
+    res.redirect(`${env.clientUrl}/oauth/callback`);
 
   } catch (err) {
     next(err);
