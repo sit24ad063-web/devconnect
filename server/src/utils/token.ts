@@ -21,27 +21,23 @@ export function verifyToken(token: string): { sub: string } {
  * Issues the authentication JWT as an httpOnly cookie.
  */
 export function setAuthCookie(res: Response, token: string): void {
-  const isProduction = env.nodeEnv === "production";
-
   res.cookie(env.cookieName, token, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",
   });
 }
 
 /**
- * Clears the authentication cookie.
+ * Clears the authentication JWT cookie.
  */
 export function clearAuthCookie(res: Response): void {
-  const isProduction = env.nodeEnv === "production";
-
   res.clearCookie(env.cookieName, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
     path: "/",
   });
 }
