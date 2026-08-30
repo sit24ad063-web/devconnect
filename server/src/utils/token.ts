@@ -4,31 +4,51 @@ import { env } from "../config/env";
 import type { PublicUser } from "@devconnect/shared";
 
 export function signToken(userId: string): string {
-  return jwt.sign({ sub: userId }, env.jwtSecret, {
-    expiresIn: env.jwtExpiresIn,
-  } as jwt.SignOptions);
+  return jwt.sign(
+    { sub: userId },
+    env.jwtSecret,
+    {
+      expiresIn: env.jwtExpiresIn,
+    } as jwt.SignOptions
+  );
 }
 
 export function verifyToken(token: string): { sub: string } {
   return jwt.verify(token, env.jwtSecret) as { sub: string };
 }
 
-/** Issues the auth JWT as an httpOnly cookie (per the brief's auth flow). */
+/**
+ * Issues the authentication JWT as an httpOnly cookie.
+ */
 export function setAuthCookie(res: Response, token: string): void {
+  const isProduction = env.nodeEnv === "production";
+
   res.cookie(env.cookieName, token, {
     httpOnly: true,
-    secure: env.nodeEnv === "production",
-    sameSite: env.nodeEnv === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: "/",
   });
 }
 
+/**
+ * Clears the authentication cookie.
+ */
 export function clearAuthCookie(res: Response): void {
-  res.clearCookie(env.cookieName);
+  const isProduction = env.nodeEnv === "production";
+
+  res.clearCookie(env.cookieName, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+  });
 }
 
-// Prisma's generated User includes `password` and `githubId`; strip/shape
-// it into the PublicUser contract shared with the client.
+/**
+ * Converts a Prisma User into the safe PublicUser object.
+ */
 export function toPublicUser(user: any): PublicUser {
   return {
     id: user.id,
@@ -42,6 +62,9 @@ export function toPublicUser(user: any): PublicUser {
     linkedinUrl: user.linkedinUrl ?? null,
     websiteUrl: user.websiteUrl ?? null,
     githubId: user.githubId ?? null,
-    createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
+    createdAt:
+      user.createdAt instanceof Date
+        ? user.createdAt.toISOString()
+        : user.createdAt,
   };
 }
