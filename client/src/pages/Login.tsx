@@ -67,7 +67,6 @@ export default function Login() {
         <p className="mt-4 text-sm text-gray-500">
           Don't have an account? <Link to="/register" className="text-brand-600 font-medium">Sign up</Link>
         </p>
-        <p className="mt-1 text-xs text-gray-400">Demo: alice@devconnect.com / password123</p>
       </div>
     </div>
   );
