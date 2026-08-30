@@ -1,0 +1,174 @@
+// DevConnect - Prisma schema
+// PostgreSQL (Neon in production). Run `docker-compose up -d` for a local
+// Postgres instance during development.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  password     String?  // nullable: GitHub OAuth users have no local password
+  githubId     String?  @unique
+  headline     String?
+  bio          String?
+  avatarUrl    String?
+  location     String?
+  githubUrl    String?
+  linkedinUrl  String?
+  websiteUrl   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  projects            Project[]
+  posts                Post[]
+  comments             Comment[]
+  likes                Like[]
+  userSkills           UserSkill[]
+  endorsementsGiven    Endorsement[]      @relation("Endorser")
+  sentConnections      Connection[]       @relation("Requester")
+  receivedConnections  Connection[]       @relation("Addressee")
+  notifications        Notification[]     @relation("NotificationRecipient")
+  notificationsCaused  Notification[]     @relation("NotificationActor")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  repoUrl     String?
+  demoUrl     String?
+  imageUrl    String?
+  techStack   String?
+  featured    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId     String
+
+  @@index([ownerId])
+}
+
+model Post {
+  id         String   @id @default(uuid())
+  title      String
+  slug       String   @unique
+  content    String   @db.Text // Markdown source
+  coverImage String?
+  tags       String?
+  published  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId   String
+  comments   Comment[]
+  likes      Like[]
+
+  @@index([authorId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  @@unique([postId, userId])
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model Connection {
+  id          String           @id @default(uuid())
+  status      ConnectionStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  requester   User   @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  requesterId String
+  addressee   User   @relation("Addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  addresseeId String
+
+  @@unique([requesterId, addresseeId])
+}
+
+// Global catalog of skills (e.g. "React", "Go"). Users attach skills via
+// UserSkill; connected developers can endorse a specific UserSkill.
+model Skill {
+  id         String      @id @default(uuid())
+  name       String      @unique
+  userSkills UserSkill[]
+}
+
+model UserSkill {
+  id           String        @id @default(uuid())
+  createdAt    DateTime      @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  skill        Skill         @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  skillId      String
+  endorsements Endorsement[]
+
+  @@unique([userId, skillId])
+}
+
+model Endorsement {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+
+  userSkill   UserSkill @relation(fields: [userSkillId], references: [id], onDelete: Cascade)
+  userSkillId String
+  endorser    User      @relation("Endorser", fields: [endorserId], references: [id], onDelete: Cascade)
+  endorserId  String
+
+  @@unique([userSkillId, endorserId])
+}
+
+enum NotificationType {
+  CONNECTION_REQUEST
+  CONNECTION_ACCEPTED
+  ENDORSEMENT
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  type        NotificationType
+  message     String
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  recipient   User   @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId String
+  actor       User   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  actorId     String
+
+  @@index([recipientId])
+}

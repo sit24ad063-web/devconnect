@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+coverage/
+*.tsbuildinfo

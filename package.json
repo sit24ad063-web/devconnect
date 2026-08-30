@@ -1,0 +1,29 @@
+{
+  "name": "devconnect",
+  "version": "2.0.0",
+  "private": true,
+  "description": "DevConnect - Developer Networking & Portfolio Platform (CodeANova internship build)",
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=client\"",
+    "build:shared": "npm run build --workspace=shared",
+    "build": "npm run build:shared && npm run build --workspace=server && npm run build --workspace=client",
+    "test": "npm run test --workspace=server && npm run test --workspace=client",
+    "prisma:generate": "npm run prisma:generate --workspace=server",
+    "prisma:migrate": "npm run prisma:migrate --workspace=server",
+    "seed": "npm run seed --workspace=server"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.5.4",
+    "browserslist": "^4.28.8",
+    "caniuse-lite": "^1.0.30001810",
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
