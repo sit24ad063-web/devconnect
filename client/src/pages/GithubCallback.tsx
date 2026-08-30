@@ -3,43 +3,41 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
 import api, { unwrap } from "../api/client";
+import { useAuthStore } from "../store/authStore";
 
 import type { PublicUser } from "@devconnect/shared";
 
-/**
- * The backend completes the GitHub OAuth exchange,
- * sets the authentication cookie, and redirects the user here.
- *
- * This page verifies the session using /auth/me,
- * updates the React Query cache, and redirects to the dashboard.
- */
 export default function GithubCallback() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const { setUser, setInitialized } = useAuthStore();
+
   useEffect(() => {
     async function completeGithubLogin() {
       try {
-        // Verify that the backend authentication cookie is valid
         const data = await unwrap<{ user: PublicUser }>(
           api.get("/auth/me")
         );
 
-        // Update the authentication cache immediately
         queryClient.setQueryData(["auth", "me"], data);
 
-        // Redirect authenticated user to dashboard
+        setUser(data.user);
+        setInitialized(true);
+
         navigate("/dashboard", { replace: true });
       } catch (error) {
         console.error("GitHub authentication failed:", error);
 
-        // Redirect back to login if OAuth authentication failed
+        setUser(null);
+        setInitialized(true);
+
         navigate("/login", { replace: true });
       }
     }
 
     completeGithubLogin();
-  }, [navigate, queryClient]);
+  }, [navigate, queryClient, setUser, setInitialized]);
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
