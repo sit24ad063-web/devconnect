@@ -1,27 +1,19 @@
 import axios from "axios";
+
 import type { ApiResponse } from "@devconnect/shared";
 
-/**
- * API Base URL configuration
- *
- * Production:
- * https://devconnect-dt2y.onrender.com/api
- *
- * Development:
- * /api
- */
-const API_URL = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL}/api`
-  : "/api";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://devconnect-dt2y.onrender.com/api";
 
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // Send/receive HTTP-only auth cookie
+  withCredentials: true,
 });
 
 /**
  * Unwraps the { success, data, message } envelope
- * returned by every API endpoint.
+ * returned by API endpoints.
  */
 export async function unwrap<T>(
   promise: Promise<{ data: ApiResponse<T> }>
@@ -35,9 +27,6 @@ export async function unwrap<T>(
   return res.data.data as T;
 }
 
-/**
- * Extracts a readable error message from API/Axios errors.
- */
 export function apiErrorMessage(
   err: unknown,
   fallback = "Something went wrong"
